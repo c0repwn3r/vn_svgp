@@ -24,7 +24,7 @@ fn main() {
         .subcommand(
             Command::new("build")
                 .about("Build all aircraft JSON according to the configuration file")
-                .arg(arg!(-k --keep-going "Ignore failures").action(ArgAction::SetTrue))
+                .arg(arg!(-k --keepgoing "Ignore failures").action(ArgAction::SetTrue))
         )
         .subcommand(
             Command::new("build_one")
@@ -77,7 +77,7 @@ fn main() {
             }
             if failures > 0 {
                 eprintln!("{failures} aircraft could not be pathificated, please check above for details");
-                if !m.get_flag("keep-going") {
+                if !m.get_flag("keepgoing") {
                     exit(1);
                 }
             } else {
