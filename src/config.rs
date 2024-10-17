@@ -26,8 +26,21 @@ pub struct AircraftConfig {
     pub attr: String,
     pub w: f64,
     pub l: f64,
-    pub a_floor: f64,
-    pub d_floor: f64
+    pub optimizer: Optimizer,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "t")]
+pub enum Optimizer {
+    #[serde(rename = "ad_floor")]
+    ADFloor {
+        a_floor: f64,
+        d_floor: f64
+    },
+    #[serde(rename = "3pt_avg")]
+    ThreePointAverage {
+        dt: f64
+    }
 }
 
 #[derive(Deserialize)]

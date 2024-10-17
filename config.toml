@@ -5,14 +5,5 @@ output_directory = "build"
 max_points = 100
 
 [aircraft]
-# Format:
-# TYPECODE = { object }
-# Object fields:
-# f = "path/to/drawing.svg" - Source SVG
-# attr = "Author"           - Attriution
-# l = 123.25                - Node-to-tail length in feet
-# w = 111.833               - Wingspan in feet
-# a_floor = 0.2             - Angle floor. 0.2 is good default - adjust up or down to control detail along with d_floor (down for more detail)
-# d_floor = 0.8             - Distance floor. 0.8 is good default - adjust up or down to control detail along with a_floor (down for more detail)
-
-A320 = { f = "source/airbus/a320.svg", attr = "VATSIM-Radar", l = 123.25, w = 111.833, a_floor = 0.15, d_floor = 0.2 } # Nose-to-tail 123 ft 3 in, wingspan 11 ft 10 in
+A320 = { f = "source/airbus/a320.svg", attr = "VATSIM-Radar", l = 123.25, w = 111.833, optimizer = { t = "ad_floor", a_floor = 0.15, d_floor = 0.2 }} # Nose-to-tail 123 ft 3 in, wingspan 11 ft 10 in
+A320_AV = { f = "source/airbus/a320.svg", attr = "VATSIM-Radar", l = 123.25, w = 111.833, optimizer = { t = "3pt_avg", dt = 0.3 }}

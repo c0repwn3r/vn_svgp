@@ -4,13 +4,15 @@ use usvg::{Options, Tree};
 use usvg::tiny_skia_path::PathSegment;
 use crate::bezier;
 use crate::config::{AircraftConfig, AircraftPointFile};
+use crate::path::optimizer::optimize;
 use crate::path::points::points_on_path;
 use crate::point::P;
 
 pub mod utils;
 mod points;
+mod optimizer;
 
-pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path, max_points: usize) -> anyhow::Result<()> {
+pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path, max_points: usize) -> anyhow::Result<AircraftPointFile> {
     let svg_str = fs::read_to_string(&config.f)
         .with_context(|| format!("[{}:{}] failed to read svg from {}", ac_typ, &config.f.display(), &config.f.display()))?;
     let svg_tree = Tree::from_str(&svg_str, &Options::default())
@@ -29,73 +31,20 @@ pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path,
         config
     )
         .with_context(|| format!("[{}:{}] Failed to calculate points on path :(", ac_typ, &config.f.display()))?;
-    
+
     let points = points.iter()
         .map(|u| P::from((u.x - image_size_px.0 / 2.0, u.y + image_size_px.1 / 2.0))) // map to center
         .map(|u| P::from((u.x * foot_per_px.0, u.y * foot_per_px.1))) // map to worldspace
         .collect::<Vec<_>>(); // turn back into a Vec<P>
-    
+
     let mut pf = AircraftPointFile {
         points,
         aircraft_types: vec![ac_typ.to_string()],
         attribution: config.attr.clone()
     };
+    
+    pf.points = optimize(&config.optimizer, pf.points);
 
-    // Optimizing: Remove duplicate points
-    pf.points.dedup();
-    
-    let mut prev_points = vec![];
-    let mut next_points = pf.points;
-    next_points.reverse(); // Flip, so I can pop points off the front
-    
-    let slope_floor = 0.7;
-    
-    while let Some(cur) = next_points.pop() {
-        if prev_points.is_empty() {
-            prev_points.push(cur);
-            continue;
-        }
-        
-        if next_points.is_empty() {
-            prev_points.push(cur);
-            break; // always include the last point
-        }
-        
-        let prev = &prev_points[prev_points.len()-1];
-        let next = &next_points[next_points.len()-1];
-        
-        // if we are very very close to the previous or next point, we can skip this one
-        if cur.distance(prev) < config.d_floor {
-            continue; // drop
-        }
-        if cur.distance(next) < config.d_floor {
-            continue; // drop
-        }
-        
-        
-        
-        let prev_slope = (cur.y - prev.y) / (cur.x - prev.x);
-        let next_slope = (next.y - cur.y) / (next.x - cur.x);
-        
-        let prev_slope_angle = prev_slope.atan();
-        let next_slope_angle = next_slope.atan();
-        
-        let angle_difference = (next_slope_angle - prev_slope_angle).abs();
-        
-        if angle_difference > config.a_floor {
-            prev_points.push(cur);
-        } else {
-            // drop the point
-        }
-    }
-    
-    pf.points = prev_points;
-
-    println!("x,y");
-    for point in &pf.points {
-        println!("{},{}", point.x, point.y);
-    }
-    
     if pf.points.len() > max_points {
         bail!("[{}:{}] Too many points! {} points after optimization is above limit of {}, try increasing the a-floor or simplifying your SVG", ac_typ, &config.f.display(), pf.points.len(), max_points);
     }
@@ -109,7 +58,7 @@ pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path,
     )
         .with_context(|| format!("[{}:{}] failed to write path spec to {}", ac_typ, &config.f.display(), &p.display()))?;
 
-    //println!("[{} {}] pathificated -> {} points", ac_typ, &config.f.display(), pf.points.len());
+    println!("[{} {}] pathificated -> {} points", ac_typ, &config.f.display(), pf.points.len());
 
-    Ok(())
+    Ok(pf)
 }

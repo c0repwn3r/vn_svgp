@@ -1,5 +1,4 @@
 #![deny(clippy::unwrap_used)]
-#![deny(clippy::expect_used)]
 #![warn(clippy::pedantic)]
 #![warn(clippy::cargo)]
 
@@ -12,7 +11,7 @@ use std::fs;
 use std::fs::{create_dir_all};
 use std::process::exit;
 use anyhow::{Context};
-use clap::{arg, command};
+use clap::{arg, ArgAction, command, Command};
 
 use crate::config::{ProgramConfig};
 
@@ -22,6 +21,16 @@ fn main() {
             arg!(-c --config <FILE> "Configuration file")
                 .required(true)
         )
+        .subcommand(
+            Command::new("build")
+                .about("Build all aircraft JSON according to the configuration file")
+        )
+        .subcommand(
+            Command::new("build_one")
+                .arg(arg!(-a --aircraft <AID> "Single AID to build").required(true))
+                .arg(arg!(-d --debug "Output CSV to stdout in addition to a json").action(ArgAction::SetTrue))
+        )
+        .subcommand_required(true)
         .get_matches();
 
     let config_path: &String = if let Some(f) = matches.get_one("config") { f } else {
@@ -53,14 +62,42 @@ fn main() {
         }
     }
 
-    for (typ, cfg) in config.aircraft {
-        match path::pathificate(&typ, &cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
-            Ok(()) => (),
-            Err(e) => {
-                eprintln!("{e:#}");
-                exit(1);
+    match matches.subcommand() {
+        Some(("build", _)) => {
+            for (typ, cfg) in config.aircraft {
+                match path::pathificate(&typ, &cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
+                    Ok(_) => (),
+                    Err(e) => {
+                        eprintln!("{e:#}");
+                        exit(1);
+                    }
+                }
+            }
+        },
+        Some(("build_one", m)) => {
+            let aid = m.get_one::<String>("aircraft").expect("aircraft ID is required");
+            let is_debug = m.get_flag("debug");
+            
+            let cfg = config.aircraft.get(aid).expect("Aircraft ID is not present in configuration");
+            match path::pathificate(aid, cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
+                Ok(p) => {
+                    if is_debug {
+                        println!("x,y");
+                        for pt in &p.points {
+                            println!("{},{}", pt.x, pt.y);
+                        }
+                    }
+                },
+                Err(e) => {
+                    eprintln!("{e:#}");
+                    exit(1);
+                }
             }
         }
+        Some((c, _)) => {
+            panic!("unknown subcommand {c}")
+        }
+        None => panic!("subcommand is required")
     }
 }
 
