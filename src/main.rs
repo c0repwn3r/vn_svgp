@@ -24,6 +24,7 @@ fn main() {
         .subcommand(
             Command::new("build")
                 .about("Build all aircraft JSON according to the configuration file")
+                .arg(arg!(-k --keep-going "Ignore failures").action(ArgAction::SetTrue))
         )
         .subcommand(
             Command::new("build_one")
@@ -63,7 +64,7 @@ fn main() {
     }
 
     match matches.subcommand() {
-        Some(("build", _)) => {
+        Some(("build", m)) => {
             let mut failures = 0;
             for (typ, cfg) in config.aircraft {
                 match path::pathificate(&typ, &cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
@@ -76,7 +77,9 @@ fn main() {
             }
             if failures > 0 {
                 eprintln!("{failures} aircraft could not be pathificated, please check above for details");
-                exit(1);
+                if !m.get_flag("keep-going") {
+                    exit(1);
+                }
             } else {
                 println!("Pathification successful :D");
             }

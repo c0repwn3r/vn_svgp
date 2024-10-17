@@ -23,7 +23,7 @@ jobs:
         run: cargo build --verbose
 
       - name: Generate aircraft
-        run: cargo run -- -c config.toml build
+        run: cargo run -- -c config.toml build --keep-going
 
       - name: Upload aircraft specs
         uses: actions/upload-artifact@v3
