@@ -1,0 +1,5 @@
+[configuration]
+output_directrory = "build"
+
+[aircraft]
+A320 = { f = "airbus/a320.svg", attr = "VATSIM-Radar", l = 123.25, w = 111.833 } # Nose-to-tail 123 ft 3 in, wingspan 11 ft 10 in
