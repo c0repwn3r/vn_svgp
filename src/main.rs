@@ -64,20 +64,27 @@ fn main() {
 
     match matches.subcommand() {
         Some(("build", _)) => {
+            let mut failures = 0;
             for (typ, cfg) in config.aircraft {
                 match path::pathificate(&typ, &cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
                     Ok(_) => (),
                     Err(e) => {
+                        failures += 1;
                         eprintln!("{e:#}");
-                        exit(1);
                     }
                 }
+            }
+            if failures > 0 {
+                eprintln!("{failures} aircraft could not be pathificated, please check above for details");
+                exit(1);
+            } else {
+                println!("Pathification successful :D");
             }
         },
         Some(("build_one", m)) => {
             let aid = m.get_one::<String>("aircraft").expect("aircraft ID is required");
             let is_debug = m.get_flag("debug");
-            
+
             let cfg = config.aircraft.get(aid).expect("Aircraft ID is not present in configuration");
             match path::pathificate(aid, cfg, config.configuration.output_directory.as_path(), config.configuration.max_points) {
                 Ok(p) => {
