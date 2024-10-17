@@ -2,8 +2,17 @@
 name = "vn_svgp"
 version = "0.1.0"
 edition = "2021"
+description = "Takes SVGs and turns them into vNAS Tower View JSON files"
+license = "GPL-3"
+repository = "https://github.com/c0repwn3r/vn_svgp"
+readme = "README.md"
+keywords = ["vnas", "vatsim", "crc"]
+categories = ["aerospace::simulation", "command-line-utilities", "development-tools::build-utils", "graphics", "simulation"]
 
 [dependencies]
 usvg = "0.44"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+clap = { version = "4.5.20", features = ["cargo"] }
+toml = "0.8"
+anyhow = "1.0.89"
