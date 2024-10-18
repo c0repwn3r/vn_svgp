@@ -251,7 +251,7 @@ fn minmax(aid: &str, m: &ArgMatches, cfg: &mut AircraftConfig, config: &ProgramC
     })?;
     eprintln!("aid={} a_floor={} d_floor={}", aid, v.0, v.1);
 
-    cfg.optimizer = Optimizer::ADFloor { a_floor: v.0, d_floor: v.1 };
+    cfg.optimizer = Optimizer::ADFloor { a_floor: v.0 + astep, d_floor: v.1 + astep };
 
     Some(*v)
 }
