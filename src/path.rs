@@ -1,8 +1,6 @@
 use std::fs;
 use anyhow::{bail, Context};
 use usvg::{Options, Tree};
-use usvg::tiny_skia_path::PathSegment;
-use crate::bezier;
 use crate::config::{AircraftConfig, AircraftPointFile};
 use crate::path::optimizer::optimize;
 use crate::path::points::points_on_path;
@@ -12,12 +10,14 @@ pub mod utils;
 mod points;
 mod optimizer;
 
-pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path, max_points: usize) -> anyhow::Result<AircraftPointFile> {
+pub fn read(ac_typ: &str, config: &AircraftConfig) -> anyhow::Result<Tree> {
     let svg_str = fs::read_to_string(&config.f)
         .with_context(|| format!("[{}:{}] failed to read svg from {}", ac_typ, &config.f.display(), &config.f.display()))?;
-    let svg_tree = Tree::from_str(&svg_str, &Options::default())
-        .with_context(|| format!("[{}:{}] failed to parse svg", ac_typ, &config.f.display()))?;
+    Tree::from_str(&svg_str, &Options::default())
+        .with_context(|| format!("[{}:{}] failed to parse svg", ac_typ, &config.f.display()))
+} 
 
+pub fn pathificate(ac_typ: &str, config: &AircraftConfig, max_points: usize, svg_tree: &Tree) -> anyhow::Result<AircraftPointFile> {
     let image_size_px = svg_tree.size();
     let image_size_px = (f64::from(image_size_px.width()), f64::from(image_size_px.height()));
     let ac_size_ft = (config.w, config.l);
@@ -49,6 +49,12 @@ pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path,
         bail!("[{}:{}] Too many points! {} points after optimization is above limit of {}, try increasing the a-floor or simplifying your SVG", ac_typ, &config.f.display(), pf.points.len(), max_points);
     }
 
+    eprintln!("[{} {}] pathificated -> {} points", ac_typ, &config.f.display(), pf.points.len());
+    
+    Ok(pf)
+}
+
+pub fn write(ac_typ: &str, out: &std::path::Path, config: &AircraftConfig, pf: &AircraftPointFile) -> anyhow::Result<()> {
     let p = out.join(format!("{ac_typ}.json"));
 
     fs::write(
@@ -57,8 +63,6 @@ pub fn pathificate(ac_typ: &str, config: &AircraftConfig, out: &std::path::Path,
             .with_context(|| format!("[{}:{}] failed to serialize path spec", ac_typ, &config.f.display()))?
     )
         .with_context(|| format!("[{}:{}] failed to write path spec to {}", ac_typ, &config.f.display(), &p.display()))?;
-
-    println!("[{} {}] pathificated -> {} points", ac_typ, &config.f.display(), pf.points.len());
-
-    Ok(pf)
+    
+    Ok(())
 }

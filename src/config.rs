@@ -12,14 +12,14 @@ pub struct AircraftPointFile {
     pub attribution: String
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct ProgramConfig {
     pub aircraft: HashMap<String, AircraftConfig>,
     pub configuration: ProgramConfigInner
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[allow(clippy::module_name_repetitions)]
 pub struct AircraftConfig {
     pub f: PathBuf,
@@ -29,7 +29,7 @@ pub struct AircraftConfig {
     pub optimizer: Optimizer,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "t")]
 pub enum Optimizer {
     #[serde(rename = "ad_floor")]
@@ -43,7 +43,7 @@ pub enum Optimizer {
     }
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct ProgramConfigInner {
     pub output_directory: PathBuf,
     pub max_points: usize

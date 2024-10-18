@@ -20,7 +20,7 @@ jobs:
         run: rustup update stable && rustup default stable
 
       - name: Build generator tool
-        run: cargo build --verbose
+        run: cargo build
 
       - name: Generate aircraft
         run: cargo run -- -c config.toml build --keepgoing

@@ -5,6 +5,7 @@ use crate::bezier;
 use crate::config::AircraftConfig;
 use crate::point::P;
 
+#[allow(clippy::module_name_repetitions)]
 pub fn points_on_path(path: &Path, ac_typ: &str, config: &AircraftConfig) -> anyhow::Result<Vec<P>> {
     path.stroke().with_context(|| format!("[{}:{}] No path element could be found :( Make sure the SVG contains at least 1 path element with a solid stroke", ac_typ, &config.f.display()))?;
 
